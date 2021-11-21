@@ -74,11 +74,8 @@ export default {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
         .then((res) => {
-          console.log(res);
           if (!res.data.error) {
-            // this.output = res.data.message
             const blob = new Blob([res.data]);
-            console.log(res);
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
