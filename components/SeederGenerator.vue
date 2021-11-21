@@ -69,7 +69,7 @@ export default {
       formData.append('statements', this.statements)
       await this.$axios({
         method: 'post',
-        url: 'http://local.james-nock.co.uk/tools/laravelseedergenerator.php',
+        url: '/tools/laravelseedergenerator.php',
         data: formData,
         headers: { 'Content-Type': 'multipart/form-data' },
       })
