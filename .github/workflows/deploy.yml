@@ -41,7 +41,7 @@ jobs:
           WORKDIR: "laravelseedergenerator"
         run: |
           # Change symlink and delete old version
-          ssh $LIGHTSAIL_USER@$LIGHTSAIL_HOST "cd ~/$WORKDIR && rm ~/$WORKDIR/current 2> /dev/null && ln -s ~/$WORKDIR/$GITHUB_SHA ~/$WORKDIR/current"
+          ssh $LIGHTSAIL_USER@$LIGHTSAIL_HOST "cd ~/$WORKDIR && rm ~/$WORKDIR/current 2> /dev/null && ln -sfn ~/$WORKDIR/$GITHUB_SHA ~/$WORKDIR/current"
 
           # Delete old versions
           ssh $LIGHTSAIL_USER@$LIGHTSAIL_HOST "cd ~/$WORKDIR && ls -dt */ | tail -n +3 | xargs rm -rf"
