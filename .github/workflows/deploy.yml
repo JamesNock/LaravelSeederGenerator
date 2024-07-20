@@ -20,15 +20,6 @@ jobs:
       - name: Adding Known Hosts
         run: ssh-keyscan -H ${{ secrets.LIGHTSAIL_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Copy ENV
-        env:
-          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
-          LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
-          GITHUB_SHA: ${{ github.sha }}
-          WORKDIR: "laravelseedergenerator"
-        run: |
-          ssh $LIGHTSAIL_USER@$LIGHTSAIL_HOST "cp ~/envs/$WORKDIR/.env ~/$WORKDIR/$GITHUB_SHA/.env"
-
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
