@@ -19,7 +19,7 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
           WORKDIR: "laravelseedergenerator"
         run: |
-          ssh $LIGHTSAIL_USER@$LIGHTSAIL_USER "cp ~/envs/$WORKDIR/.env ~/$WORKDIR/$GITHUB_SHA/.env"
+          ssh $LIGHTSAIL_USER@$LIGHTSAIL_HOST "cp ~/envs/$WORKDIR/.env ~/$WORKDIR/$GITHUB_SHA/.env"
 
       - name: Use Node.js
         uses: actions/setup-node@v4
