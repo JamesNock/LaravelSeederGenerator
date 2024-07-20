@@ -1,0 +1,59 @@
+name: Build & Deploy
+on:
+  push:
+    branches:
+      - de-netlify
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
+      - name: Copy ENV
+        env:
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+          LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
+          GITHUB_SHA: ${{ github.sha }}
+          WORKDIR: "laravelseedergenerator"
+        run: |
+          ssh $LIGHTSAIL_USER@$LIGHTSAIL_USER "cp ~/envs/$WORKDIR/.env ~/$WORKDIR/$GITHUB_SHA/.env"
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install dependencies and build
+        run: |
+          npm install
+          npm run generate
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+
+      - name: Adding Known Hosts
+        run: ssh-keyscan -H ${{ secrets.LIGHTSAIL_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Copy with rsync
+        run: rsync -avz --delete ./dist/* ${{ secrets.LIGHTSAIL_USER }}@${{ secrets.LIGHTSAIL_HOST }}:laravelseedergenerator/${{ github.sha }}
+
+      - name: Launch
+        env:
+          LIGHTSAIL_HOST: ${{ secrets.LIGHTSAIL_HOST }}
+          LIGHTSAIL_USER: ${{ secrets.LIGHTSAIL_USER }}
+          GITHUB_SHA: ${{ github.sha }}
+          WORKDIR: "laravelseedergenerator"
+        run: |
+          # Change symlink and delete old version
+          ssh $LIGHTSAIL_USER@$LIGHTSAIL_HOST "cd ~/$WORKDIR && rm ~/$WORKDIR/current 2> /dev/null && ln -s ~/$WORKDIR/$GITHUB_SHA ~/$WORKDIR/current"
+
+          # Delete old versions
+          ssh $LIGHTSAIL_USER@$LIGHTSAIL_HOST "cd ~/$WORKDIR && ls -dt */ | tail -n +3 | xargs rm -rf"
+
+      - name: Notify deployment success
+        run: echo "Deployment to Lightsail successful!"
