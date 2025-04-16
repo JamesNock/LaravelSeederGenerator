@@ -58,15 +58,15 @@ const handleSubmit = async () => {
     }, 5000)
     return
   }
-  
+
   output.value = 'Fetching...'
   fetching.value = true
   errorMsg.value = ''
-  
+
   try {
     const formData = new FormData()
     formData.append('statements', statements.value)
-    
+
     const { data, error } = await useFetch('https://www.james-nock.co.uk/tools/laravelseedergenerator.php', {
       method: 'POST',
       body: formData,
