@@ -20,7 +20,7 @@
             hover:bg-pink-400 hover:text-black"
           type="submit"
           value="Perform the magic!"
-          @click.prevent="fetch"
+          @click.prevent="handleSubmit"
         />
       </form>
       <div v-if="output" class="bg-yellow-300 p-4" @click="copyThis">
@@ -40,66 +40,74 @@
     </div>
   </div>
 </template>
-<script>
-export default {
-  data() {
-    return {
-      statements: '',
-      output: '',
-      errorMsg: '',
-      fetching: false,
+
+<script setup>
+import { ref } from 'vue'
+import { useNuxtApp } from '#app'
+
+const statements = ref('')
+const output = ref('')
+const errorMsg = ref('')
+const fetching = ref(false)
+
+const handleSubmit = async () => {
+  if (!statements.value) {
+    errorMsg.value = "Please enter statements. e.g.\r\nINSERT INTO content(`id`, `title`, `text`)\r\nVALUES\r\n(1, 'title', 'text'),\r\n(2, 'title', 'text');"
+    setTimeout(() => {
+      errorMsg.value = ''
+    }, 5000)
+    return
+  }
+
+  output.value = 'Fetching...'
+  fetching.value = true
+  errorMsg.value = ''
+
+  try {
+    const formData = new FormData()
+    formData.append('statements', statements.value)
+
+    const { data, error } = await useFetch('https://www.james-nock.co.uk/tools/laravelseedergenerator.php', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (error.value) {
+      throw error.value
     }
-  },
-  methods: {
-    prevent(event) {
-      event.stopPropagation()
-    },
-    async fetch() {
-      if (!this.statements) {
-        this.errorMsg = "Please enter statements. e.g.\r\nINSERT INTO content(`id`, `title`, `text`)\r\nVALUES\r\n(1, 'title', 'text'),\r\n(2, 'title', 'text');"
-        setTimeout(() => {
-          this.errorMsg = ''
-        }, 5000)
-        return
-      }
-      this.output = 'Fetching...'
-      this.fetching = true
-      this.errorMsg = ''
-      const formData = new FormData()
-      formData.append('statements', this.statements)
-      await this.$axios({
-        method: 'post',
-        url: 'https://www.james-nock.co.uk/tools/laravelseedergenerator.php',
-        data: formData,
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
-        .then((res) => {
-          if (!res.data.error) {
-            const blob = new Blob([res.data]);
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            const filename = this.statements.split(';')[0].split('(')[0].replace(/INSERT\s?INTO\s?/g, '') + 'Seeder.php';
-            a.setAttribute('download', filename[0].toUpperCase() + filename.slice(1));
-            document.body.appendChild(a);
-            a.click();
-            this.output = 'File downloading...'
-            setTimeout(() => {
-              window.URL.revokeObjectURL(url);
-              document.body.removeChild(a);
-              this.fetching = false
-              this.output = ''
-            }, 0);
-          } else {
-            this.output = ''
-            this.errorMsg = res.data.message
-          }
-          this.fetching = false
-        })
-    },
-    copyThis(event) {
-      this.$nuxt.$emit('copyThis', event.target)
-    },
-  },
+
+    if (!data.value.error) {
+      // Create blob from response data
+      const blob = new Blob([data.value])
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const filename = statements.value.split(';')[0].split('(')[0].replace(/INSERT\s?INTO\s?/g, '') + 'Seeder.php'
+      a.setAttribute('download', filename[0].toUpperCase() + filename.slice(1))
+      document.body.appendChild(a)
+      a.click()
+      output.value = 'File downloading...'
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        fetching.value = false
+        output.value = ''
+      }, 0)
+    } else {
+      output.value = ''
+      errorMsg.value = data.value.message
+    }
+  } catch (error) {
+    errorMsg.value = 'An error occurred while processing your request.'
+    output.value = ''
+    console.error('Error:', error)
+  } finally {
+    fetching.value = false
+  }
+}
+
+const copyThis = (event) => {
+  const { $bus } = useNuxtApp()
+  $bus.emit('copyThis', event.target)
 }
 </script>
