@@ -66,46 +66,45 @@
     </div>
   </div>
 </template>
-<script>
-export default {
-  data() {
-    return {
-      copiedtoclipboard: false,
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useNuxtApp } from '#app'
+
+const copiedtoclipboard = ref(false)
+
+const copyThis = (clickeditem) => {
+  if (process.client) {
+    const el = document.createElement('textarea')
+    el.value = clickeditem.innerText
+    el.setAttribute('readonly', '')
+    el.style.position = 'absolute'
+    el.style.left = '-9999px'
+    document.body.appendChild(el)
+    const selected =
+      document.getSelection().rangeCount > 0
+        ? document.getSelection().getRangeAt(0)
+        : false
+    el.select()
+    document.execCommand('copy')
+    document.body.removeChild(el)
+    if (selected) {
+      document.getSelection().removeAllRanges()
+      document.getSelection().addRange(selected)
     }
-  },
-  methods: {
-    copyThis(clickeditem) {
-      if (process.client) {
-        const el = document.createElement('textarea')
-        el.value = clickeditem.innerText
-        el.setAttribute('readonly', '')
-        el.style.position = 'absolute'
-        el.style.left = '-9999px'
-        document.body.appendChild(el)
-        const selected =
-          document.getSelection().rangeCount > 0
-            ? document.getSelection().getRangeAt(0)
-            : false
-        el.select()
-        document.execCommand('copy')
-        document.body.removeChild(el)
-        if (selected) {
-          document.getSelection().removeAllRanges()
-          document.getSelection().addRange(selected)
-        }
-        clickeditem.classList.add('bg-green-400')
-        this.copiedtoclipboard = true
-        setTimeout(() => {
-          clickeditem.classList.remove('bg-green-400')
-          this.copiedtoclipboard = false
-        }, 3000)
-      }
-    }
-  },
-  created() {
-    this.$nuxt.$on('copyThis', (clickeditem) => {
-      this.copyThis(clickeditem);
-    })
-  },
+    clickeditem.classList.add('bg-green-400')
+    copiedtoclipboard.value = true
+    setTimeout(() => {
+      clickeditem.classList.remove('bg-green-400')
+      copiedtoclipboard.value = false
+    }, 3000)
+  }
 }
+
+onMounted(() => {
+  const { $bus } = useNuxtApp()
+  $bus.on('copyThis', (clickeditem) => {
+    copyThis(clickeditem)
+  })
+})
 </script>
