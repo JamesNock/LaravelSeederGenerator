@@ -43,7 +43,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useNuxtApp } from '#app'
+import { useFetch, useNuxtApp } from '#app'
 
 const statements = ref('')
 const output = ref('')
